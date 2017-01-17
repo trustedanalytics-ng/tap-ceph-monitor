@@ -26,6 +26,8 @@ verify_gopath:
 	fi
 
 docker_build: build_anywhere
+	test -s kubectl
+	chmod +x kubectl
 	docker build -t tap-ceph-monitor .
 
 push_docker: docker_build

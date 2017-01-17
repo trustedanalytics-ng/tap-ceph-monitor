@@ -91,5 +91,4 @@ x: xclean build_anywhere
 	docker build -t 127.0.0.1:30000/tap-ceph-monitor:v2 .
 	docker push 127.0.0.1:30000/tap-ceph-monitor:v2
 	
-	# DOWN tap-ceph-monitor ; sleep 3;  UP tap-ceph-monitor ; sleep 10 ; POD_NAME=`P | grep ceph-mon | cut -d' ' -f1` ; echo $POD_NAME; L $POD_NAME
 	

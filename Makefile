@@ -84,11 +84,3 @@ test: verify_gopath
 	go test -tags netgo --cover $(APP_DIR_LIST)
 
 
-xclean:
-	rm -f ./tap-ceph-monitor ./application/tap-ceph-monitor
-	
-x: xclean build_anywhere
-	docker build -t 127.0.0.1:30000/tap-ceph-monitor:v2 .
-	docker push 127.0.0.1:30000/tap-ceph-monitor:v2
-	
-	

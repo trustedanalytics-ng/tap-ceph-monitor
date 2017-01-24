@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ func nodeStatusExtractIP(value []byte) (string, error) {
 			}
 		})
 	}
-	return ip, nil
+	return ip, err
 }
 
 func nodeStatusExtractStatus(value []byte) (string, error) {
@@ -114,17 +114,9 @@ func nodeStatusExtractStatus(value []byte) (string, error) {
 	return status, nil
 }
 
-func GetNodeStatuses() ([]NodeStatus, error) {
-	logger.Info("GetNodeStatuses")
+func extractNodeStatuses(valueNodes []byte) ([]NodeStatus, error) {
 	result := []NodeStatus{}
-
-	out, err := exec.Command("kubectl", "get", "nodes", "-o=json").Output()
-	if err != nil {
-		logger.Error(err)
-		return result, err
-	}
-
-	jsonparser.ArrayEach(out, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+	_, errParse := jsonparser.ArrayEach(valueNodes, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		name, err := jsonparser.GetString(value, "metadata", "name")
 		if err != nil {
 			logger.Error(err)
@@ -132,11 +124,23 @@ func GetNodeStatuses() ([]NodeStatus, error) {
 		ip, err := nodeStatusExtractIP(value)
 		status, err := nodeStatusExtractStatus(value)
 		logger.Info(string(name), string(ip), string(status))
-		node_status := NodeStatus{name, ip, status}
+		node_status := NodeStatus{Name: name, Ip: ip, Ready: status}
 		result = append(result, node_status)
 	}, "items")
+	return result, errParse
+}
 
-	return result, nil
+func GetNodeStatuses() ([]NodeStatus, error) {
+	logger.Info("GetNodeStatuses")
+
+	out, err := exec.Command("kubectl", "get", "nodes", "-o=json").Output()
+	if err != nil {
+		logger.Error(err)
+		return []NodeStatus{}, err
+	}
+
+	result, err := extractNodeStatuses(out)
+	return result, err
 }
 
 func GetUnhealthyNodes() ([]NodeStatus, error) {

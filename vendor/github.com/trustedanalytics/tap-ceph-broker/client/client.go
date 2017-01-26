@@ -31,6 +31,11 @@ import (
 type CephBroker interface {
 	CreateRBD(device model.RBD) (int, error)
 	DeleteRBD(name string) (int, error)
+
+	ListLocks() ([]model.Lock, int, error)
+	DeleteLock(lock model.Lock) (int, error)
+
+	GetCephBrokerHealth() (int, error)
 }
 
 // CephBrokerConnector keeps data required to connect to the service
@@ -95,37 +100,36 @@ func (t *CephBrokerConnector) DeleteRBD(name string) (int, error) {
 }
 
 // GetCephBrokerHealth calls healthz and verifies response status code
-func (t *CephBrokerConnector) GetCephBrokerHealth() error {
+func (t *CephBrokerConnector) GetCephBrokerHealth() (int, error) {
 	url := fmt.Sprintf("%s/healthz", t.Address)
 
 	auth := brokerHttp.BasicAuth{User: t.Username, Password: t.Password}
 	status, _, err := brokerHttp.RestGET(url, brokerHttp.GetBasicAuthHeader(&auth), t.Client)
 	if status != http.StatusOK {
-		err = errors.New("invalid health status: " + string(status))
+		return http.StatusInternalServerError, fmt.Errorf("invalid health status: %v", err)
 	}
-	return err
+	return http.StatusOK, nil
 }
 
-func (t *CephBrokerConnector) ListLocks() ([]model.Lock, error) {
+func (t *CephBrokerConnector) ListLocks() ([]model.Lock, int, error) {
 	ret := []model.Lock{}
-	
+
 	url := fmt.Sprintf("%s/api/v1/lock", t.Address)
 
 	auth := brokerHttp.BasicAuth{User: t.Username, Password: t.Password}
 	status, body, err := brokerHttp.RestGET(url, brokerHttp.GetBasicAuthHeader(&auth), t.Client)
 	if err != nil {
-		return ret, err
+		return ret, status, err
 	}
 	if status != http.StatusOK {
-		return ret, errors.New("bad response status: " + strconv.Itoa(status))
+		return ret, status, errors.New("bad response status: " + strconv.Itoa(status))
 	}
-	
-	
-    if err := json.Unmarshal(body, &ret); err != nil {
-        panic(err)
-    }
-	
-	return ret, nil
+
+	if err := json.Unmarshal(body, &ret); err != nil {
+		panic(err)
+	}
+
+	return ret, status, nil
 }
 
 func (t *CephBrokerConnector) DeleteLock(lock model.Lock) (int, error) {
@@ -140,5 +144,3 @@ func (t *CephBrokerConnector) DeleteLock(lock model.Lock) (int, error) {
 	}
 	return status, nil
 }
-
-

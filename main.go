@@ -58,7 +58,7 @@ func getCephBrokerConnector() (*cephClient.CephBrokerConnector, error) {
 	if err != nil {
 		return nil, err
 	}
-	return cephClient.NewCephBrokerBasicAuth("http://"+address, username, password)
+	return cephClient.NewCephBrokerBasicAuth("https://"+address, username, password)
 }
 
 type NodeStatus struct {

@@ -13,13 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package model
-
-// Lock represents ceph RBD lock instance
-type Lock struct {
-	ImageName string `json:"imageName"`
-	LockName  string `json:"lockName"`
-	Locker    string `json:"locker"`
-	Address   string `json:"address"`
-}

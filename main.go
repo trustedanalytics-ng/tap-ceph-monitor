@@ -72,22 +72,24 @@ func nodeStatusExtractIP(value []byte) (string, error) {
 	jaddresses, _, _, err := jsonparser.Get(value, "status", "addresses")
 	if err != nil {
 		logger.Error(err)
-	} else {
-		jsonparser.ArrayEach(jaddresses, func(address_value []byte, dataType jsonparser.ValueType, offset int, err error) {
-			jtype, err := jsonparser.GetString(address_value, "type")
+		return ip, err
+	}
+
+	jsonparser.ArrayEach(jaddresses, func(address_value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		jtype, err := jsonparser.GetString(address_value, "type")
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+
+		if jtype == "InternalIP" {
+			ip, err = jsonparser.GetString(address_value, "address")
 			if err != nil {
 				logger.Error(err)
-				return
 			}
+		}
+	})
 
-			if jtype == "InternalIP" {
-				ip, err = jsonparser.GetString(address_value, "address")
-				if err != nil {
-					logger.Error(err)
-				}
-			}
-		})
-	}
 	return ip, err
 }
 
@@ -96,21 +98,22 @@ func nodeStatusExtractStatus(value []byte) (string, error) {
 	jconditions, _, _, err := jsonparser.Get(value, "status", "conditions")
 	if err != nil {
 		logger.Error(err)
-	} else {
-		jsonparser.ArrayEach(jconditions, func(condition_value []byte, dataType jsonparser.ValueType, offset int, err error) {
-			jtype, err := jsonparser.GetString(condition_value, "type")
+		return status, err
+	}
+	jsonparser.ArrayEach(jconditions, func(condition_value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		jtype, err := jsonparser.GetString(condition_value, "type")
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		if jtype == "Ready" {
+			status, err = jsonparser.GetString(condition_value, "status")
 			if err != nil {
 				logger.Error(err)
-				return
 			}
-			if jtype == "Ready" {
-				status, err = jsonparser.GetString(condition_value, "status")
-				if err != nil {
-					logger.Error(err)
-				}
-			}
-		})
-	}
+		}
+	})
+
 	return status, nil
 }
 
@@ -139,8 +142,7 @@ func GetNodeStatuses() ([]NodeStatus, error) {
 		return []NodeStatus{}, err
 	}
 
-	result, err := extractNodeStatuses(out)
-	return result, err
+	return extractNodeStatuses(out)
 }
 
 func GetUnhealthyNodes() ([]NodeStatus, error) {
@@ -170,7 +172,7 @@ func GetLocks() (map[string][]cephModel.Lock, error) {
 		logger.Error(err)
 		return node_lock_map, err
 	}
-	locks, err := ceph_broker_client.ListLocks()
+	locks, _, err := ceph_broker_client.ListLocks()
 	if err != nil {
 		return node_lock_map, err
 	}
@@ -206,12 +208,11 @@ func DeleteLock(lock cephModel.Lock) error {
 
 func evictNode(unhealthy_node NodeStatus) error {
 	logger.Info("Evicting unhealthy node:", unhealthy_node)
-	out, err := exec.Command("kubectl", "drain", unhealthy_node.Name, "--force").Output()
+	_, err := exec.Command("kubectl", "drain", unhealthy_node.Name, "--force").Output()
 	if err != nil {
 		logger.Error(err)
 		return err
 	}
-	logger.Info("Output:", string(out))
 	return nil
 }
 
@@ -219,8 +220,7 @@ func removeAllLocks(unhealthy_node NodeStatus, node_lock_map map[string][]cephMo
 	logger.Info("Removing all locks from unhealthy node:", unhealthy_node)
 	for _, l := range node_lock_map[unhealthy_node.Name] {
 		logger.Info(" removing lock ---> ", l)
-		err := DeleteLock(l)
-		if err != nil {
+		if err := DeleteLock(l); err != nil {
 			return err
 		}
 	}

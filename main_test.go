@@ -15,7 +15,10 @@
  */
 package main
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 type byteArray []byte
 
@@ -69,6 +72,14 @@ func TestNodeStatusExtractStatusShouldReturnStatus(t *testing.T) {
 	}
 }
 
+func TestNodeStatusExtractStatusShouldReturnError(t *testing.T) {
+	_, e := nodeStatusExtractStatus([]byte(""))
+
+	if e == nil {
+		t.Error("Error should not be nil")
+	}
+}
+
 func TestExtractNodeStatuses(t *testing.T) {
 	statuses, err := extractNodeStatuses([]byte(`{
 		"items":[` + nodeItem1 + `]
@@ -92,4 +103,23 @@ func TestExtractNodeStatuses(t *testing.T) {
 		}
 	}
 
+}
+
+func TestGetCephBrokerConnectorWithoutEnvs(t *testing.T) {
+	_, err := getCephBrokerConnector()
+	if err == nil {
+		t.Error("Error should not be nil")
+	}
+}
+
+func TestGetCephBrokerConnectorWithEnvs(t *testing.T) {
+	component := "CEPH_BROKER"
+	os.Setenv(component+"_HOST", "host")
+	os.Setenv(component+"_PORT", "80")
+	os.Setenv(component+"_USER", "user")
+	os.Setenv(component+"_PASS", "password")
+	_, err := getCephBrokerConnector()
+	if err != nil {
+		t.Errorf("Error should be nil, but is: %v", err)
+	}
 }

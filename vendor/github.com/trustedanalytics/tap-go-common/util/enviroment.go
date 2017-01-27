@@ -89,17 +89,20 @@ func GetConnectionParametersFromEnv(componentName string) (address, username, pa
 
 	address, err = GetConnectionAddressFromEnvs(componentName)
 	if err != nil {
+		fmt.Println("pzelazko 1")
 		errorArray = append(errorArray, err)
 	}
 
 	username, password, err = GetConnectionCredentialsFromEnvs(componentName)
 	if err != nil {
+		fmt.Println("pzelazko 2")
 		errorArray = append(errorArray, err)
 	}
 
 	if len(errorArray) > 0 {
 		err = sumErrors(errorArray)
 	}
+	fmt.Println("pzelazko", err)
 	return
 }
 
@@ -112,12 +115,14 @@ func GetEnvOrError(envName string) (string, error) {
 }
 
 func sumErrors(errorsArray []error) error {
-	finalByteMessage := []byte{}
-	byteCounter := 0
-
-	for _, err := range errorsArray {
-		byteCounter += copy(finalByteMessage[byteCounter:], fmt.Sprintf("%s, ", err.Error()))
+	if len(errorsArray) == 0 {
+		return nil
 	}
 
-	return errors.New(string(finalByteMessage))
+	result := errorsArray[0].Error()
+	for i := 1; i < len(errorsArray); i++ {
+		result += ", " + errorsArray[i].Error()
+
+	}
+	return errors.New(result)
 }

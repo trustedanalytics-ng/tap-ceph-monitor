@@ -25,7 +25,7 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/gocraft/web"
 
-	cephClient "github.com/trustedanalytics/tap-ceph-broker/client"
+	"github.com/trustedanalytics/tap-ceph-broker/client"
 	cephModel "github.com/trustedanalytics/tap-ceph-broker/model"
 	httpGoCommon "github.com/trustedanalytics/tap-go-common/http"
 	commonLogger "github.com/trustedanalytics/tap-go-common/logger"
@@ -33,6 +33,7 @@ import (
 )
 
 var logger, _ = commonLogger.InitLogger("ceph-monitor")
+var cephClient client.CephBroker
 
 type Context struct{}
 
@@ -41,6 +42,12 @@ func (c *Context) GetHealth(rw web.ResponseWriter, req *web.Request) {
 }
 
 func main() {
+	var err error
+	cephClient, err = getCephBrokerConnector()
+	if err != nil {
+		logger.Fatal("Can't connect with TAP-ceph-broker!", err)
+	}
+
 	logger.Info("Starting...")
 	go monitor()
 
@@ -53,12 +60,12 @@ func main() {
 	httpGoCommon.StartServer(r)
 }
 
-func getCephBrokerConnector() (*cephClient.CephBrokerConnector, error) {
+func getCephBrokerConnector() (*client.CephBrokerConnector, error) {
 	address, username, password, err := util.GetConnectionParametersFromEnv("CEPH_BROKER")
 	if err != nil {
 		return nil, err
 	}
-	return cephClient.NewCephBrokerBasicAuth("https://"+address, username, password)
+	return client.NewCephBrokerBasicAuth("https://"+address, username, password)
 }
 
 type NodeStatus struct {
@@ -167,12 +174,8 @@ func GetUnhealthyNodes() ([]NodeStatus, error) {
 func GetLocks() (map[string][]cephModel.Lock, error) {
 	logger.Info("GetLocks")
 	node_lock_map := map[string][]cephModel.Lock{}
-	ceph_broker_client, err := getCephBrokerConnector()
-	if err != nil {
-		logger.Error(err)
-		return node_lock_map, err
-	}
-	locks, _, err := ceph_broker_client.ListLocks()
+
+	locks, _, err := cephClient.ListLocks()
 	if err != nil {
 		return node_lock_map, err
 	}
@@ -193,12 +196,8 @@ func GetLocks() (map[string][]cephModel.Lock, error) {
 
 func DeleteLock(lock cephModel.Lock) error {
 	logger.Info("DeleteLock", lock)
-	ceph_broker_client, err := getCephBrokerConnector()
-	if err != nil {
-		logger.Error(err)
-		return err
-	}
-	status, err := ceph_broker_client.DeleteLock(lock)
+
+	status, err := cephClient.DeleteLock(lock)
 	if err != nil {
 		return err
 	}

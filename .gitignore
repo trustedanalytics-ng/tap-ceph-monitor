@@ -7,3 +7,4 @@ build_info.ini
 *.iml
 /temp
 /tap-container-broker
+dumb-init

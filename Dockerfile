@@ -18,6 +18,9 @@ FROM tapimages:8080/tap-base-binary:binary-jessie
 ADD kubectl /usr/bin
 RUN chmod +x /usr/bin/kubectl
 
+ADD dumb-init /
+RUN chmod +x /dumb-init
+
 RUN mkdir -p /opt/app
 ADD application/tap-ceph-monitor /opt/app
 
@@ -28,5 +31,5 @@ WORKDIR /opt/app/
 ENV PORT "80"
 EXPOSE 80
 
-ENTRYPOINT ["/opt/app/tap-ceph-monitor"]
+ENTRYPOINT ["/dumb-init", "--", "/opt/app/tap-ceph-monitor"]
 CMD [""]

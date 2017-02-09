@@ -15,7 +15,11 @@
 GOBIN=$(GOPATH)/bin
 APP_DIR_LIST=$(shell go list ./... | grep -v /vendor/)
 
-build: verify_gopath
+dumb-init:
+	#$(CC) -std=gnu99 -static -s -Wall -Werror -O3 init/dumb-init.c -o dumb-init
+	$(CC) -std=gnu99 -s -Wall -Werror -O3 init/dumb-init.c -o dumb-init
+
+build: dumb-init verify_gopath
 	CGO_ENABLED=0 go install -tags netgo $(APP_DIR_LIST)
 	go fmt $(APP_DIR_LIST)
 
@@ -25,7 +29,7 @@ verify_gopath:
 		exit 1 ;\
 	fi
 
-docker_build: build_anywhere
+docker_build: dumb-init build_anywhere
 	test -s kubectl
 	chmod +x kubectl
 	docker build -t tap-ceph-monitor .
@@ -62,7 +66,7 @@ prepare_dirs:
 	$(eval REPOFILES=$(shell pwd)/*)
 	ln -sf $(REPOFILES) temp/src/github.com/trustedanalytics/tap-ceph-monitor
 
-build_anywhere: prepare_dirs
+build_anywhere: prepare_dirs dumb-init
 	$(eval GOPATH=$(shell cd ./temp; pwd))
 	$(eval APP_DIR_LIST=$(shell GOPATH=$(GOPATH) go list ./temp/src/github.com/trustedanalytics/tap-ceph-monitor/... | grep -v /vendor/))
 	GOPATH=$(GOPATH) CGO_ENABLED=0 go build -tags netgo $(APP_DIR_LIST)

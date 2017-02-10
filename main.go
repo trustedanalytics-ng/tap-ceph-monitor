@@ -25,11 +25,11 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/gocraft/web"
 
-	"github.com/trustedanalytics/tap-ceph-broker/client"
-	cephModel "github.com/trustedanalytics/tap-ceph-broker/model"
-	httpGoCommon "github.com/trustedanalytics/tap-go-common/http"
-	commonLogger "github.com/trustedanalytics/tap-go-common/logger"
-	"github.com/trustedanalytics/tap-go-common/util"
+	"github.com/trustedanalytics-ng/tap-ceph-broker/client"
+	cephModel "github.com/trustedanalytics-ng/tap-ceph-broker/model"
+	httpGoCommon "github.com/trustedanalytics-ng/tap-go-common/http"
+	commonLogger "github.com/trustedanalytics-ng/tap-go-common/logger"
+	"github.com/trustedanalytics-ng/tap-go-common/util"
 )
 
 var logger, _ = commonLogger.InitLogger("ceph-monitor")

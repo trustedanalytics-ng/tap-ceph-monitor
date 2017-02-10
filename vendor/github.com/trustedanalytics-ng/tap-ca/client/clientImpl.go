@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"net/http"
 
-	caModels "github.com/trustedanalytics/tap-ca/models"
-	commonHttp "github.com/trustedanalytics/tap-go-common/http"
+	caModels "github.com/trustedanalytics-ng/tap-ca/models"
+	commonHttp "github.com/trustedanalytics-ng/tap-go-common/http"
 )
 
 func (c *TapCaApiConnector) GetCa() (caModels.CaResponse, error) {

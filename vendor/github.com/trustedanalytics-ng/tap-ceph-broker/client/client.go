@@ -23,8 +23,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/trustedanalytics/tap-ceph-broker/model"
-	brokerHttp "github.com/trustedanalytics/tap-go-common/http"
+	"github.com/trustedanalytics-ng/tap-ceph-broker/model"
+	brokerHttp "github.com/trustedanalytics-ng/tap-go-common/http"
 )
 
 // CephBroker delivers an interface to access ceph-broker functionality to the client
